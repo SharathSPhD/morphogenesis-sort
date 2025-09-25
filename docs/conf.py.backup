@@ -35,9 +35,8 @@ extensions = [
     'myst_parser',
 ]
 
-# MyST parser configuration (source_parsers is deprecated in modern Sphinx)
-
 templates_path = ['_templates']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -60,19 +59,7 @@ autodoc_default_options = {
 autodoc_mock_imports = [
     'numpy', 'scipy', 'pandas', 'matplotlib', 'seaborn', 'plotly',
     'bokeh', 'numba', 'h5py', 'pyarrow', 'msgpack', 'aiofiles',
-    'structlog', 'rich', 'tqdm', 'yaml', 'psutil', 'memory_profiler',
-    'line_profiler', 'py_spy', 'infrastructure', 'experiments',
-    'analysis', 'core.agents.behaviors', 'core.data.types',
-    'analysis.statistical.descriptive', 'analysis.statistical.hypothesis_testing',
-    'analysis.visualization.comprehensive_visualization_suite',
-    'analysis.visualization.animated_morphogenesis_visualizer',
-    'analysis.reports.generator', 'analysis.reports.html_generator',
-    'analysis.reports.pdf_generator', 'core.agents.behaviors.sorting_cell',
-    'core.agents.behaviors.adaptive_cell', 'core.agents.behaviors.morphogen_cell',
-    'experiments.experiment_runner', 'experiments.experiment_config',
-    'infrastructure.logging.logger', 'infrastructure.logging.async_logger',
-    'infrastructure.performance.monitor', 'infrastructure.testing.fixtures',
-    'infrastructure.testing.test_case'
+    'structlog', 'rich', 'tqdm', 'yaml'
 ]
 
 # -- Options for autosummary ------------------------------------------------
@@ -111,6 +98,7 @@ myst_enable_extensions = [
     "dollarmath",
     "html_admonition",
     "html_image",
+    "linkify",
     "replacements",
     "smartquotes",
     "substitution",
@@ -120,8 +108,10 @@ myst_enable_extensions = [
 # -- Additional configuration ------------------------------------------------
 
 # The suffix(es) of source filenames.
-source_suffix = ['.rst', '.md']
-
+source_suffix = {
+    '.rst': None,
+    '.md': 'myst_parser',
+}
 
 # The master toctree document.
 master_doc = 'index'

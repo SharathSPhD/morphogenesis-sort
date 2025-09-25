@@ -1,0 +1,33 @@
+/* Custom CSS for Enhanced Morphogenesis Research Platform Documentation */
+
+/* Color scheme inspired by biological processes */
+:root {
+    --primary-blue: #2980B9;
+    --secondary-green: #27AE60;
+    --accent-orange: #E67E22;
+    --text-dark: #2C3E50;
+    --background-light: #ECF0F1;
+    --warning-red: #E74C3C;
+}
+
+/* Enhance code blocks for better readability */
+.highlight pre {
+    border-left: 4px solid var(--primary-blue);
+    padding-left: 1em;
+    background-color: #f8f9fa;
+}
+
+/* Mathematical equations styling */
+.math {
+    text-align: center;
+    margin: 20px 0;
+}
+
+/* API documentation improvements */
+.py.class,
+.py.function,
+.py.method {
+    border-left: 3px solid var(--primary-blue);
+    padding-left: 10px;
+    margin: 15px 0;
+}

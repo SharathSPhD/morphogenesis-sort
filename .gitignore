@@ -134,6 +134,9 @@ analysis_plots/figures/
 results/
 experiments/data/
 
+# Documentation build artifacts
+docs/_build/
+
 # Large model files
 *.bin
 *.model
