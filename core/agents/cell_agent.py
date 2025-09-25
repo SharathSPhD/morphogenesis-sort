@@ -1,8 +1,57 @@
-"""Async cell agent implementation for morphogenesis simulation.
+"""Async cellular agent implementation for morphogenesis research.
 
-This module provides the AsyncCellAgent base class that replaces the
-problematic threading.Thread approach with async coroutines for
-deterministic, scientifically valid cell simulation.
+**Biological Foundation:**
+Real cells are autonomous agents that sense their environment, make decisions,
+and act based on genetic programs and local conditions. During morphogenesis
+(the development of form and structure), cells coordinate their behavior to
+create complex tissues and organs through purely local interactions.
+
+**Scientific Innovation:**
+This module implements computational cells as async agents, eliminating the
+race conditions and non-deterministic behavior that plague traditional threaded
+cell simulations. Each cell runs as an independent coroutine that makes
+biologically-inspired decisions while maintaining scientific reproducibility.
+
+**Key Biological Processes Modeled:**
+- **Environmental Sensing**: Cells detect neighbors and local chemical gradients
+- **Decision Making**: Cells choose actions based on developmental programs
+- **Cooperative Behavior**: Cells coordinate through signaling and spatial cues
+- **Self-Organization**: Emergent tissue patterns arise from individual cell actions
+
+**Research Applications:**
+- Studying how cells self-organize during embryonic development
+- Modeling tissue repair and wound healing processes
+- Understanding cancer cell migration and metastasis
+- Investigating stem cell differentiation and tissue engineering
+
+Example:
+    >>> import asyncio
+    >>> from core.agents.cell_agent import StandardCellAgent
+    >>> from core.data.types import CellParameters, Position, CellID
+    >>>
+    >>> # Create a research-grade cellular agent
+    >>> cell_params = CellParameters(interaction_radius=10.0, max_speed=2.0)
+    >>> behavior_config = CellBehaviorConfig(
+    ...     sorting_enabled=True,
+    ...     cooperation_probability=0.8
+    ... )
+    >>> position = Position(x=50, y=50)
+    >>> cell_data = CellData.create_initial(CellID(1), position, cell_params)
+    >>>
+    >>> # Create autonomous cell agent
+    >>> cell_agent = StandardCellAgent(
+    ...     cell_id=CellID(1),
+    ...     initial_data=cell_data,
+    ...     behavior_config=behavior_config,
+    ...     parameters=cell_params,
+    ...     random_seed=42
+    ... )
+    >>>
+    >>> # Run cellular lifecycle simulation
+    >>> async def simulate_cell_development():
+    ...     await cell_agent.run()
+    >>>
+    >>> asyncio.run(simulate_cell_development())
 """
 
 import asyncio
@@ -27,7 +76,30 @@ from ..data.state import CellData, SimulationState
 
 
 class AgentState(Enum):
-    """States of the async cell agent lifecycle."""
+    """Lifecycle states of autonomous cellular agents during morphogenesis.
+
+    These states mirror the biological lifecycle of cells during development,
+    from initial creation through active participation in tissue formation
+    to eventual death or quiescence. Understanding these states is crucial
+    for researchers analyzing cellular behavior and development patterns.
+
+    States:
+        CREATED: Cell agent instantiated but not yet initialized
+        INITIALIZING: Cell setting up internal systems and sensing environment
+        ACTIVE: Cell actively participating in morphogenetic processes
+        WAITING: Cell temporarily inactive, awaiting environmental cues
+        PROCESSING: Cell computing complex behavioral decisions
+        PAUSED: Cell suspended by external control (useful for debugging)
+        STOPPING: Cell beginning graceful shutdown process
+        STOPPED: Cell completely terminated, all resources cleaned up
+        ERROR: Cell encountered unrecoverable error, requires investigation
+
+    Example:
+        >>> cell_agent = StandardCellAgent(...)
+        >>> print(cell_agent.agent_state)  # AgentState.CREATED
+        >>> await cell_agent._initialize()
+        >>> print(cell_agent.agent_state)  # AgentState.ACTIVE
+    """
     CREATED = "created"
     INITIALIZING = "initializing"
     ACTIVE = "active"
@@ -41,7 +113,48 @@ class AgentState(Enum):
 
 @dataclass
 class AgentMessage:
-    """Message passed between agent and coordinator."""
+    """Communication message between cellular agents and the coordination system.
+
+    In biological systems, cells communicate through biochemical signals,
+    mechanical forces, and direct contact. This message system simulates
+    that intercellular communication, enabling coordination and collective
+    behavior during morphogenetic processes.
+
+    The messaging system supports various types of cellular communication
+    including environmental updates, neighbor notifications, and coordination
+    signals that enable emergent tissue organization.
+
+    Attributes:
+        sender_id: Unique identifier of the sending cell (-1 for coordinator)
+        message_type: Type of biological signal or coordination message
+        data: Payload containing signal-specific information
+        timestep: Simulation time when message was sent (for temporal analysis)
+
+    Common Message Types:
+        - "update_state": Cell state synchronization from coordinator
+        - "neighbor_update": Information about nearby cells
+        - "environment_update": Changes in local biochemical environment
+        - "division_signal": Cell division coordination
+        - "death_signal": Apoptosis notification to neighbors
+        - "chemical_gradient": Morphogen concentration updates
+
+    Example:
+        >>> # Coordinator updating cell about its new position
+        >>> update_msg = AgentMessage(
+        ...     sender_id=CellID(-1),  # Coordinator
+        ...     message_type="update_state",
+        ...     data={"position": new_position, "cell_data": updated_data},
+        ...     timestep=current_timestep
+        ... )
+        >>>
+        >>> # Cell signaling division to neighbors
+        >>> division_msg = AgentMessage(
+        ...     sender_id=CellID(123),
+        ...     message_type="division_signal",
+        ...     data={"division_axis": axis_vector, "daughter_positions": positions},
+        ...     timestep=current_timestep
+        ... )
+    """
     sender_id: CellID
     message_type: str
     data: Dict[str, Any] = field(default_factory=dict)
@@ -50,32 +163,100 @@ class AgentMessage:
 
 @dataclass
 class CellBehaviorConfig:
-    """Configuration for cell behavior parameters."""
+    """Configuration parameters for cellular behavior during morphogenesis.
+
+    This configuration defines how cells behave during development, controlling
+    everything from basic movement patterns to complex cooperative behaviors.
+    These parameters are inspired by real cellular biology, where cells exhibit
+    diverse behaviors depending on their type, developmental stage, and environment.
+
+    **Biological Relevance:**
+    Different cell types exhibit distinct behaviors - neural cells migrate along
+    specific paths, epithelial cells form tight sheets, and mesenchymal cells
+    move individually. This configuration allows researchers to model these
+    diverse cellular behaviors accurately.
+
+    Attributes:
+        behavior_type: Primary behavioral phenotype (e.g., "epithelial", "mesenchymal", "neural")
+        decision_frequency: How often cells evaluate their environment (timesteps).
+                          Mirrors biological decision-making cycles.
+        action_delay: Delay between decision and action (seconds).
+                     Models biological response latency.
+        sorting_enabled: Whether cells participate in tissue sorting processes.
+                        Critical for studying cell segregation and pattern formation.
+        sorting_algorithm: Algorithm for cell sorting behavior ("bubble", "selection", "insertion").
+                          Different algorithms model different biological sorting mechanisms.
+        comparison_method: How cells compare themselves to neighbors ("value", "position", "type").
+                         Reflects different biological sorting cues.
+        movement_enabled: Whether cells can actively migrate.
+                         Essential for studying cell migration during development.
+        max_movement_distance: Maximum distance per timestep (biological units).
+                              Reflects cellular locomotion capabilities.
+        movement_randomness: Degree of random movement (0.0-1.0).
+                           Models stochastic cellular motility.
+        interaction_enabled: Whether cells respond to neighbors.
+                           Critical for intercellular communication studies.
+        cooperation_probability: Likelihood of cooperative behavior (0.0-1.0).
+                               Models altruistic cellular behavior.
+        swap_willingness: Probability of position swapping with neighbors (0.0-1.0).
+                         Important for tissue rearrangement studies.
+        learning_enabled: Whether cells adapt their behavior over time.
+                         Models cellular memory and adaptation.
+        learning_rate: Speed of behavioral adaptation (0.0-1.0).
+                      Reflects plasticity in cellular responses.
+        memory_capacity: Number of past events cells remember.
+                        Models cellular memory systems.
+        error_recovery: Whether cells can recover from errors.
+                       Models biological robustness and repair mechanisms.
+        max_retry_attempts: Maximum attempts to recover from errors.
+                          Reflects cellular resilience limits.
+        freeze_on_error: Whether to freeze cells on unrecoverable errors.
+                        Useful for debugging developmental abnormalities.
+
+    Example:
+        >>> # Configuration for epithelial cells (form sheets, low motility)
+        >>> epithelial_config = CellBehaviorConfig(
+        ...     behavior_type="epithelial",
+        ...     movement_enabled=True,
+        ...     max_movement_distance=0.5,  # Low motility
+        ...     cooperation_probability=0.9,  # Highly cooperative
+        ...     sorting_enabled=True
+        ... )
+        >>>
+        >>> # Configuration for neural cells (high motility, path-following)
+        >>> neural_config = CellBehaviorConfig(
+        ...     behavior_type="neural",
+        ...     movement_enabled=True,
+        ...     max_movement_distance=2.0,  # High motility
+        ...     movement_randomness=0.05,  # Directed movement
+        ...     learning_enabled=True  # Adaptive behavior
+        ... )
+    """
     # Core behavior settings
     behavior_type: str = "standard"
     decision_frequency: int = 1  # How often to make decisions (timesteps)
     action_delay: float = 0.0  # Delay before executing actions
-    
+
     # Sorting behavior
     sorting_enabled: bool = True
     sorting_algorithm: str = "bubble"  # bubble, selection, insertion
     comparison_method: str = "value"  # value, position, type
-    
-    # Movement behavior  
+
+    # Movement behavior
     movement_enabled: bool = True
     max_movement_distance: float = 1.0
     movement_randomness: float = 0.1
-    
+
     # Interaction behavior
     interaction_enabled: bool = True
     cooperation_probability: float = 0.8
     swap_willingness: float = 0.5
-    
+
     # Learning and adaptation
     learning_enabled: bool = False
     learning_rate: float = 0.01
     memory_capacity: int = 100
-    
+
     # Error handling
     error_recovery: bool = True
     max_retry_attempts: int = 3
@@ -83,11 +264,70 @@ class CellBehaviorConfig:
 
 
 class AsyncCellAgent(ABC):
-    """Base class for async cell agents.
-    
-    This replaces threading.Thread with async coroutines to eliminate
-    race conditions and provide deterministic execution. Each cell
-    runs as an independent coroutine that yields control cooperatively.
+    """Base class for autonomous cellular agents in morphogenesis simulations.
+
+    **Biological Inspiration:**
+    Real cells are autonomous agents that continuously sense their environment,
+    make decisions based on genetic programs and local conditions, and execute
+    actions that contribute to tissue development. This class models that
+    cellular autonomy while ensuring scientific reproducibility.
+
+    **Scientific Innovation:**
+    Traditional threaded cell simulations suffer from race conditions that make
+    results non-reproducible - a fatal flaw for peer-reviewed research. This
+    async-based design eliminates those issues while maintaining the autonomous
+    nature of cellular behavior that drives morphogenetic processes.
+
+    **Key Cellular Behaviors Modeled:**
+    - **Environmental Sensing**: Continuous monitoring of local neighborhood
+    - **Decision Making**: Biologically-inspired behavioral choices
+    - **Action Execution**: Movement, division, signaling, and death
+    - **Communication**: Intercellular signaling and coordination
+    - **Adaptation**: Learning and behavioral modification over time
+    - **Lifecycle Management**: Birth, growth, reproduction, and death
+
+    **Research Applications:**
+    - Developmental biology studies of tissue formation
+    - Cancer research modeling metastasis and tumor growth
+    - Regenerative medicine simulating wound healing
+    - Tissue engineering optimizing scaffold designs
+    - Systems biology understanding emergent properties
+
+    Args:
+        cell_id: Unique identifier for this cellular agent
+        initial_data: Complete biological state data for the cell
+        behavior_config: Configuration controlling cellular behavior patterns
+        parameters: Physical and biological parameters for the cell type
+        random_seed: Seed for deterministic random behavior (scientific reproducibility)
+
+    Example:
+        >>> # Create a custom cell agent for tissue morphogenesis research
+        >>> class NeuralCellAgent(AsyncCellAgent):
+        ...     async def _decide_action(self) -> CellAction:
+        ...         # Neural cells migrate along chemical gradients
+        ...         neighbors = self.get_neighbors()
+        ...         gradient_direction = self._detect_gradient(neighbors)
+        ...         if gradient_direction:
+        ...             target_pos = self.current_data.position + gradient_direction
+        ...             return create_move_action(self.cell_id, self.last_update_timestep, target_pos)
+        ...         return create_wait_action(self.cell_id, self.last_update_timestep)
+        >>>
+        >>> # Create and run neural development simulation
+        >>> neural_cell = NeuralCellAgent(
+        ...     cell_id=CellID(1),
+        ...     initial_data=neural_cell_data,
+        ...     behavior_config=neural_behavior_config,
+        ...     parameters=neural_cell_parameters,
+        ...     random_seed=12345
+        ... )
+        >>>
+        >>> # Run complete cellular lifecycle
+        >>> await neural_cell.run()
+
+    Note:
+        Subclasses must implement the _decide_action() method to define specific
+        cellular behaviors. The async architecture ensures deterministic execution
+        essential for reproducible morphogenesis research.
     """
     
     def __init__(

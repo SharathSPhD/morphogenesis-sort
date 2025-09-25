@@ -1,8 +1,64 @@
-"""Lock-free metrics collection system for high-performance simulation monitoring.
+"""Lock-free metrics collection for morphogenesis research analytics.
 
-This module implements a lock-free metrics collection system that prevents
-data corruption and provides real-time monitoring capabilities without
-introducing threading artifacts or performance bottlenecks.
+**Scientific Monitoring Requirements:**
+Morphogenesis research requires continuous monitoring of thousands of cellular
+agents and their interactions without compromising simulation performance or
+introducing measurement artifacts. This system provides lock-free, high-throughput
+metrics collection essential for quantitative analysis of developmental processes.
+
+**Research Applications:**
+- **Morphogenetic Pattern Analysis**: Track emergence of spatial patterns and tissue organization
+- **Cellular Behavior Quantification**: Measure migration speeds, division rates, and death frequencies
+- **Performance Optimization**: Monitor computational efficiency for large-scale tissue simulations
+- **Experimental Validation**: Collect data for statistical analysis and peer review
+- **Real-time Monitoring**: Observe developmental processes as they unfold
+
+**Lock-Free Architecture Benefits:**
+Traditional metrics systems introduce locks that can alter cellular timing and
+create artificial synchronization points. This lock-free design ensures:
+- No interference with natural cellular asynchrony
+- Deterministic behavior essential for scientific reproducibility
+- High-throughput data collection from thousands of concurrent cellular agents
+- Real-time monitoring without simulation performance degradation
+
+**Metrics Categories:**
+- **Biological Metrics**: Cell counts, migration distances, division rates, tissue density
+- **Behavioral Metrics**: Decision frequencies, cooperation rates, sorting efficiency
+- **Performance Metrics**: Timestep durations, memory usage, throughput rates
+- **Spatial Metrics**: Pattern formation, clustering coefficients, spatial correlations
+
+Example:
+    >>> import asyncio
+    >>> from core.metrics.collector import MetricsCollector, MetricDefinition, MetricType
+    >>>
+    >>> # Define morphogenesis-specific metrics
+    >>> cell_count_metric = MetricDefinition(
+    ...     name="active_cell_count",
+    ...     metric_type=MetricType.GAUGE,
+    ...     description="Number of living cells in tissue",
+    ...     unit="cells"
+    ... )
+    >>>
+    >>> migration_speed_metric = MetricDefinition(
+    ...     name="average_migration_speed",
+    ...     metric_type=MetricType.GAUGE,
+    ...     description="Mean cellular migration velocity",
+    ...     unit="micrometers_per_timestep"
+    ... )
+    >>>
+    >>> # Create high-performance metrics collector
+    >>> collector = MetricsCollector()
+    >>> await collector.initialize()
+    >>> collector.register_metric(cell_count_metric)
+    >>> collector.register_metric(migration_speed_metric)
+    >>>
+    >>> # Collect morphogenesis data without locks
+    >>> await collector.record_value("active_cell_count", len(active_cells))
+    >>> await collector.record_value("average_migration_speed", mean_speed)
+    >>>
+    >>> # Export for statistical analysis
+    >>> morphogenesis_data = await collector.export_all_metrics()
+    >>> print(f"Collected {len(morphogenesis_data)} data points")
 """
 
 import asyncio

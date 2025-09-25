@@ -1,8 +1,38 @@
-"""DeterministicCoordinator - Central coordination engine for cell simulation.
+"""DeterministicCoordinator - Central coordination engine for morphogenesis simulation.
 
-This module implements the core coordination engine that manages async cell agents
-in a deterministic, time-stepped manner. It eliminates the threading artifacts
-present in the original implementation while ensuring scientific reproducibility.
+**Morphogenesis Overview:**
+Morphogenesis is the biological process by which organisms develop their shape and form.
+This process involves billions of cells working together through local interactions
+to create complex, organized structures like organs and tissues. Understanding how
+simple cellular rules can produce such intricate patterns is crucial for developmental
+biology, tissue engineering, and regenerative medicine research.
+
+**Scientific Significance:**
+This coordination engine enables researchers to simulate morphogenesis at scale by:
+- Managing thousands of autonomous cellular agents simultaneously
+- Ensuring deterministic, reproducible experimental results
+- Eliminating race conditions that plague threaded simulations
+- Providing real-time metrics for quantitative morphogenesis analysis
+
+**Technical Innovation:**
+The module replaces problematic threading approaches with async-based coordination,
+ensuring every simulation run produces identical results given the same parameters.
+This reproducibility is essential for peer review and scientific validation.
+
+Example:
+    >>> import asyncio
+    >>> from core.coordination.coordinator import DeterministicCoordinator
+    >>> from core.data.types import WorldParameters, CellParameters
+    >>>
+    >>> # Set up morphogenesis simulation parameters
+    >>> world_params = WorldParameters(width=100, height=100, seed=42)
+    >>> cell_params = CellParameters(interaction_radius=5.0, max_speed=1.0)
+    >>> config = CoordinatorConfig(max_timesteps=1000, global_seed=42)
+    >>>
+    >>> # Create and run morphogenesis simulation
+    >>> coordinator = DeterministicCoordinator(world_params, cell_params, config)
+    >>> await coordinator.initialize()
+    >>> await coordinator.run_simulation()
 """
 
 import asyncio
@@ -33,7 +63,27 @@ from .conflict_resolver import ConflictResolver
 
 
 class CoordinatorState(Enum):
-    """States of the coordinator lifecycle."""
+    """States of the morphogenesis simulation coordinator lifecycle.
+
+    The coordinator manages the entire simulation through distinct phases,
+    ensuring proper resource management and error handling during complex
+    biological simulations that may run for hours or days.
+
+    States:
+        CREATED: Coordinator instance created but not initialized
+        INITIALIZING: Setting up spatial indices, agents, and simulation state
+        RUNNING: Active morphogenesis simulation in progress
+        PAUSED: Simulation temporarily halted but can resume
+        STOPPING: Graceful shutdown of all cellular agents in progress
+        STOPPED: All resources cleaned up, simulation complete
+        ERROR: Unrecoverable error occurred, investigation needed
+
+    Example:
+        >>> coordinator = DeterministicCoordinator(world_params, cell_params, config)
+        >>> print(coordinator.state)  # CoordinatorState.CREATED
+        >>> await coordinator.initialize()
+        >>> print(coordinator.state)  # CoordinatorState.RUNNING
+    """
     CREATED = "created"
     INITIALIZING = "initializing"
     RUNNING = "running"
@@ -45,7 +95,38 @@ class CoordinatorState(Enum):
 
 @dataclass
 class CoordinationMetrics:
-    """Metrics for coordination engine performance."""
+    """Performance and scientific metrics for morphogenesis simulations.
+
+    These metrics enable researchers to quantify morphogenetic processes and
+    optimize simulation performance for large-scale developmental studies.
+    Key metrics help identify bottlenecks and measure biological phenomena
+    like collective cell movement, pattern formation, and self-organization.
+
+    Attributes:
+        total_timesteps: Number of simulation time steps completed.
+                        Each timestep represents a discrete moment in biological development.
+        total_actions_processed: Total cellular actions executed (moves, swaps, divisions).
+                                Higher numbers indicate more dynamic morphogenetic activity.
+        total_conflicts_resolved: Number of spatial conflicts resolved between cells.
+                                 Important for understanding competitive cell behaviors.
+        average_timestep_duration: Mean execution time per timestep in seconds.
+                                  Critical for performance optimization of large simulations.
+        active_agents_count: Current number of living cellular agents.
+                           Tracks population dynamics during morphogenesis.
+        failed_actions_count: Number of invalid actions attempted by cells.
+                             Indicates cellular decision-making errors or environmental constraints.
+        timestep_durations: Rolling window of recent timestep execution times.
+                           Used for real-time performance monitoring.
+        actions_per_timestep: Rolling window of actions executed per timestep.
+                             Measures simulation activity and cellular behavior intensity.
+
+    Example:
+        >>> metrics = coordinator.get_metrics()
+        >>> print(f"Morphogenesis progress: {metrics.total_timesteps} timesteps")
+        >>> print(f"Cell activity: {metrics.total_actions_processed} actions")
+        >>> efficiency = metrics.total_actions_processed / metrics.total_timesteps
+        >>> print(f"Cellular efficiency: {efficiency:.2f} actions/timestep")
+    """
     total_timesteps: int = 0
     total_actions_processed: int = 0
     total_conflicts_resolved: int = 0
@@ -58,7 +139,24 @@ class CoordinationMetrics:
     actions_per_timestep: deque = field(default_factory=lambda: deque(maxlen=100))
 
     def update_timestep_performance(self, duration: float, action_count: int) -> None:
-        """Update performance metrics after timestep completion."""
+        """Update performance metrics after completing a simulation timestep.
+
+        This method maintains rolling averages of simulation performance,
+        enabling real-time monitoring of morphogenesis simulation efficiency.
+        Used by researchers to optimize parameters for large-scale studies.
+
+        Args:
+            duration: Time in seconds to execute the timestep.
+                     Includes all cellular decision-making and coordination overhead.
+            action_count: Number of cellular actions processed this timestep.
+                         Reflects the biological activity level during development.
+
+        Example:
+            >>> metrics = CoordinationMetrics()
+            >>> # After each simulation timestep
+            >>> metrics.update_timestep_performance(0.05, 150)
+            >>> print(f"Average timestep: {metrics.average_timestep_duration:.3f}s")
+        """
         self.timestep_durations.append(duration)
         self.actions_per_timestep.append(action_count)
 
@@ -68,7 +166,59 @@ class CoordinationMetrics:
 
 @dataclass
 class CoordinatorConfig:
-    """Configuration for the deterministic coordinator."""
+    """Configuration parameters for deterministic morphogenesis simulations.
+
+    This configuration ensures reproducible, scientifically valid simulations
+    by controlling all sources of randomness and execution parameters.
+    Proper configuration is essential for peer-reviewed research and
+    comparative studies across different morphogenetic scenarios.
+
+    Attributes:
+        max_timesteps: Maximum number of simulation timesteps to execute.
+                      Each timestep represents biological time (often minutes to hours).
+        timestep_timeout: Maximum wall-clock time per timestep in seconds.
+                         Prevents infinite loops during complex morphogenetic events.
+        max_concurrent_actions: Upper limit on simultaneous cellular actions.
+                               Prevents memory exhaustion in large tissue simulations.
+        global_seed: Master random seed for reproducible morphogenesis patterns.
+                    Same seed + same parameters = identical developmental outcomes.
+        action_ordering_seed: Seed for deterministic cellular action ordering.
+                            Ensures consistent cell behavior priority resolution.
+        conflict_resolution_seed: Seed for resolving spatial conflicts between cells.
+                                Maintains fairness in competitive cellular interactions.
+        batch_size: Number of cellular actions processed per execution batch.
+                   Balances performance with memory usage for large cell populations.
+        spatial_index_updates_per_timestep: Frequency of spatial data structure updates.
+                                          Higher values improve neighbor search accuracy.
+        metrics_collection_frequency: Timesteps between comprehensive metric updates.
+                                    Affects monitoring overhead vs. data granularity.
+        max_action_retries: Retry attempts for failed cellular actions.
+                          Improves robustness against transient simulation errors.
+        freeze_on_error: Whether to freeze failed cells rather than removing them.
+                        Preserves tissue structure during error recovery.
+        continue_on_agent_failure: Continue simulation if individual cells fail.
+                                 Essential for studying robustness in development.
+        max_action_history: Maximum stored cellular actions for analysis.
+                          Balances historical data availability with memory usage.
+        gc_frequency: Timesteps between garbage collection cycles.
+                     Optimizes memory usage during long developmental simulations.
+
+    Example:
+        >>> # Configuration for rapid prototyping
+        >>> rapid_config = CoordinatorConfig(
+        ...     max_timesteps=1000,
+        ...     global_seed=42,
+        ...     batch_size=50
+        ... )
+        >>>
+        >>> # Configuration for publication-quality research
+        >>> research_config = CoordinatorConfig(
+        ...     max_timesteps=100000,
+        ...     global_seed=12345,
+        ...     batch_size=200,
+        ...     metrics_collection_frequency=1  # Detailed monitoring
+        ... )
+    """
     # Core execution parameters
     max_timesteps: int = 10000
     timestep_timeout: float = 1.0  # Max time per timestep in seconds
@@ -95,19 +245,92 @@ class CoordinatorConfig:
 
 
 class DeterministicCoordinator:
-    """Central coordination engine for deterministic cell simulation.
+    """Central coordination engine for deterministic morphogenesis simulations.
 
-    This class replaces the problematic threading approach with async-based
-    coordination that ensures deterministic, reproducible execution. It manages
-    all cell agents, coordinates their actions, and maintains simulation state.
+    **Biological Context:**
+    In real morphogenesis, cells coordinate through biochemical signaling and
+    physical interactions to create organized tissues. This coordinator simulates
+    that coordination at scale, managing thousands of autonomous cellular agents
+    that make decisions based on local environmental cues, just like real cells
+    during embryonic development.
 
-    Key Features:
-    - Deterministic time-stepped execution
-    - Async cell agent management
-    - Conflict resolution for competing actions
-    - Spatial indexing for efficient neighbor queries
-    - Performance monitoring and optimization
-    - Complete elimination of race conditions
+    **Scientific Innovation:**
+    Traditional threaded approaches to biological simulation suffer from race
+    conditions that make results non-reproducible - a critical flaw for scientific
+    research. This coordinator uses async-based deterministic execution to ensure
+    every simulation run with identical parameters produces identical results,
+    meeting peer review standards for computational biology.
+
+    **Key Features:**
+    - **Deterministic Execution**: Every simulation produces identical results
+      given the same parameters, essential for scientific reproducibility
+    - **Async Cell Management**: Manages thousands of autonomous cellular agents
+      without thread synchronization issues
+    - **Spatial Conflict Resolution**: Resolves competing cellular actions fairly
+      when multiple cells attempt to occupy the same space
+    - **Real-time Performance Monitoring**: Tracks simulation efficiency and
+      biological metrics for optimization and analysis
+    - **Graceful Error Handling**: Continues simulation despite individual cell
+      failures, mimicking biological robustness
+
+    **Research Applications:**
+    - Tissue morphogenesis and organ development studies
+    - Pattern formation in developmental biology
+    - Cell sorting and self-organization research
+    - Wound healing and regeneration modeling
+    - Cancer metastasis and cell migration analysis
+
+    Args:
+        world_params: Physical simulation environment parameters (size, boundaries, etc.)
+        cell_params: Cellular behavior parameters (speed, interaction radius, etc.)
+        config: Coordination engine configuration for performance and reproducibility
+        logger: Optional custom logger for debugging and monitoring
+
+    Example:
+        >>> import asyncio
+        >>> from core.coordination.coordinator import DeterministicCoordinator
+        >>> from core.data.types import WorldParameters, CellParameters
+        >>> from core.agents.cell_agent import AsyncCellAgent
+        >>>
+        >>> # Configure morphogenesis simulation
+        >>> world_params = WorldParameters(width=200, height=200, seed=12345)
+        >>> cell_params = CellParameters(
+        ...     interaction_radius=10.0,
+        ...     max_speed=2.0,
+        ...     division_threshold=100.0
+        ... )
+        >>> config = CoordinatorConfig(
+        ...     max_timesteps=5000,
+        ...     global_seed=12345,
+        ...     batch_size=100
+        ... )
+        >>>
+        >>> # Create and run tissue development simulation
+        >>> async def run_morphogenesis():
+        ...     coordinator = DeterministicCoordinator(world_params, cell_params, config)
+        ...     await coordinator.initialize()
+        ...
+        ...     # Add initial cell population
+        ...     for i in range(100):
+        ...         cell = AsyncCellAgent.create_random(cell_params, world_params)
+        ...         await coordinator.add_agent(cell)
+        ...
+        ...     # Run morphogenesis simulation
+        ...     await coordinator.run_simulation()
+        ...
+        ...     # Analyze results
+        ...     metrics = coordinator.get_metrics()
+        ...     print(f"Tissue developed over {metrics.total_timesteps} timesteps")
+        ...     print(f"Final cell count: {metrics.active_agents_count}")
+        >>>
+        >>> # Execute the simulation
+        >>> asyncio.run(run_morphogenesis())
+
+    Note:
+        This coordinator is designed for computational biology research requiring
+        reproducible results. All randomness is controlled through seeds, and the
+        async architecture prevents race conditions that plague traditional
+        threaded biological simulations.
     """
 
     def __init__(
@@ -158,7 +381,30 @@ class DeterministicCoordinator:
         self.failed_agent_ids: Set[CellID] = set()
 
     async def initialize(self) -> None:
-        """Initialize the coordinator and all subsystems."""
+        """Initialize the coordinator and all morphogenesis subsystems.
+
+        Sets up the complete simulation environment including spatial indexing
+        for efficient cell neighbor discovery, deterministic scheduling for
+        reproducible results, and conflict resolution for handling competing
+        cellular actions. This initialization ensures the simulation is ready
+        for scientific-quality morphogenesis research.
+
+        The initialization process creates the foundational data structures
+        needed to track thousands of cells and their interactions during
+        complex developmental processes like tissue formation, wound healing,
+        or pattern development.
+
+        Raises:
+            RuntimeError: If initialization fails due to invalid parameters
+                         or system resource constraints
+            ValueError: If world or cell parameters are scientifically invalid
+
+        Example:
+            >>> coordinator = DeterministicCoordinator(world_params, cell_params, config)
+            >>> await coordinator.initialize()
+            >>> print(f"Coordinator state: {coordinator.state}")  # RUNNING
+            >>> print(f"Ready for {coordinator.config.max_timesteps} timesteps")
+        """
         self.logger.info("Initializing DeterministicCoordinator")
         self.state = CoordinatorState.INITIALIZING
 
@@ -188,7 +434,41 @@ class DeterministicCoordinator:
             raise
 
     async def add_agent(self, agent: AsyncCellAgent) -> None:
-        """Add a new cell agent to the simulation."""
+        """Add a new cellular agent to the morphogenesis simulation.
+
+        Integrates a new autonomous cell into the simulation environment,
+        registering it with the spatial index for neighbor discovery and
+        updating the global simulation state. This simulates biological
+        processes like cell division, migration into tissue, or introduction
+        of new cell types during development.
+
+        The agent becomes immediately active and begins participating in
+        cellular interactions, responding to environmental cues and making
+        decisions based on its local neighborhood of other cells.
+
+        Args:
+            agent: A fully configured cellular agent ready for morphogenesis
+                  simulation. Must have unique cell_id and valid position.
+
+        Raises:
+            ValueError: If an agent with the same cell_id already exists
+                       or if the agent has invalid parameters
+            RuntimeError: If the coordinator is not in running state
+
+        Example:
+            >>> # Create a new stem cell
+            >>> position = Position(x=50, y=50)
+            >>> stem_cell = AsyncCellAgent.create_at_position(
+            ...     cell_id=CellID(1001),
+            ...     position=position,
+            ...     cell_params=cell_params
+            ... )
+            >>>
+            >>> # Add to active simulation
+            >>> await coordinator.add_agent(stem_cell)
+            >>> print(f"Added cell {stem_cell.cell_id} to simulation")
+            >>> print(f"Total cells: {coordinator.get_agent_count()}")
+        """
         if agent.cell_id in self.agents:
             raise ValueError(f"Agent with ID {agent.cell_id} already exists")
 
@@ -209,7 +489,30 @@ class DeterministicCoordinator:
         self.logger.debug(f"Added agent {agent.cell_id}")
 
     async def remove_agent(self, cell_id: CellID) -> None:
-        """Remove a cell agent from the simulation."""
+        """Remove a cellular agent from the morphogenesis simulation.
+
+        Gracefully removes a cell from the active simulation, cleaning up
+        all associated resources and spatial references. This simulates
+        biological processes like apoptosis (programmed cell death), cell
+        migration out of the tissue, or removal of damaged cells during
+        development or wound healing.
+
+        The removal process ensures no orphaned references remain and that
+        neighboring cells are notified of the change in their local environment.
+
+        Args:
+            cell_id: Unique identifier of the cell to remove
+
+        Example:
+            >>> # Remove cell that has completed its developmental role
+            >>> dying_cell_id = CellID(1001)
+            >>> await coordinator.remove_agent(dying_cell_id)
+            >>> print(f"Cell {dying_cell_id} removed from simulation")
+            >>>
+            >>> # Check remaining population
+            >>> remaining_cells = coordinator.get_agent_count()
+            >>> print(f"Remaining cells: {remaining_cells}")
+        """
         if cell_id not in self.agents:
             return
 
@@ -238,7 +541,58 @@ class DeterministicCoordinator:
         self.logger.debug(f"Removed agent {cell_id}")
 
     async def run_simulation(self, max_timesteps: Optional[int] = None) -> None:
-        """Run the main simulation loop."""
+        """Execute the complete morphogenesis simulation process.
+
+        Runs the main simulation loop that orchestrates cellular development
+        over biological time. Each timestep represents a discrete moment in
+        morphogenetic development, during which all cells sense their environment,
+        make decisions, and execute actions like movement, division, or
+        biochemical signaling.
+
+        The simulation continues until one of several termination conditions:
+        - Maximum timesteps reached (normal completion)
+        - All cells have died or become inactive
+        - Shutdown requested by external control
+        - Unrecoverable error (if configured to stop on errors)
+
+        **Biological Process Simulated:**
+        1. **Environmental Sensing**: Each cell evaluates its local neighborhood
+        2. **Decision Making**: Cells choose actions based on morphogenetic rules
+        3. **Action Coordination**: The coordinator resolves conflicting actions
+        4. **State Updates**: Cell positions, states, and tissue structure updated
+        5. **Signal Propagation**: Biochemical and physical signals transmitted
+
+        This mirrors real morphogenesis where cells continuously respond to
+        local cues to create organized tissue architecture.
+
+        Args:
+            max_timesteps: Override the configured maximum timesteps.
+                          Useful for shorter test runs or extended research studies.
+
+        Raises:
+            RuntimeError: If coordinator is not in RUNNING state or if a critical
+                         simulation error occurs that cannot be recovered
+            ValueError: If max_timesteps is negative or zero
+
+        Example:
+            >>> # Run a complete tissue development simulation
+            >>> coordinator = DeterministicCoordinator(world_params, cell_params, config)
+            >>> await coordinator.initialize()
+            >>>
+            >>> # Add initial cell population
+            >>> for i in range(50):
+            ...     cell = AsyncCellAgent.create_random(cell_params, world_params)
+            ...     await coordinator.add_agent(cell)
+            >>>
+            >>> # Run morphogenesis for 1000 timesteps
+            >>> await coordinator.run_simulation(max_timesteps=1000)
+            >>>
+            >>> # Analyze morphogenetic outcomes
+            >>> final_metrics = coordinator.get_metrics()
+            >>> print(f"Morphogenesis completed: {final_metrics.total_timesteps} timesteps")
+            >>> print(f"Cellular actions: {final_metrics.total_actions_processed}")
+            >>> print(f"Final tissue size: {final_metrics.active_agents_count} cells")
+        """
         self.logger.info("Starting simulation execution")
 
         if self.state != CoordinatorState.RUNNING:

@@ -1,0 +1,13 @@
+# Documentation dependencies for ReadTheDocs
+-r base.txt
+
+# Sphinx and extensions
+sphinx>=8.0.0
+sphinx-autodoc-typehints>=3.0.0
+sphinx-rtd-theme>=3.0.0
+myst-parser>=4.0.0
+
+# Additional documentation tools
+nbsphinx>=0.9.0
+sphinxcontrib-bibtex>=2.6.0
+sphinxcontrib-mermaid>=0.9.0
