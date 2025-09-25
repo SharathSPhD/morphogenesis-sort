@@ -1,0 +1,179 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "enhanced-morphogenesis"
+version = "1.0.0"
+description = "Enhanced Morphogenesis Research Platform with Async Architecture"
+readme = "docs/README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Morphogenesis Research Team", email = "research@morphogenesis.org"},
+]
+maintainers = [
+    {name = "Morphogenesis Research Team", email = "research@morphogenesis.org"},
+]
+keywords = [
+    "morphogenesis",
+    "cellular-biology",
+    "async-programming",
+    "scientific-computing",
+    "emergence",
+    "collective-intelligence"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "asyncio>=3.4.3",
+    "aiofiles>=23.2.1",
+    "numpy>=1.24.3",
+    "scipy>=1.11.1",
+    "pandas>=2.0.3",
+    "matplotlib>=3.7.2",
+    "seaborn>=0.12.2",
+    "plotly>=5.15.0",
+    "pyyaml>=6.0.1",
+    "structlog>=23.1.0",
+    "rich>=13.5.2",
+    "tqdm>=4.66.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.1",
+    "pytest-cov>=4.1.0",
+    "black>=23.7.0",
+    "isort>=5.12.0",
+    "mypy>=1.5.1",
+    "flake8>=6.0.0",
+    "pre-commit>=3.3.3",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.1",
+    "pytest-benchmark>=4.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.1",
+    "hypothesis>=6.82.0",
+]
+viz = [
+    "jupyter>=1.0.0",
+    "jupyterlab>=4.0.5",
+    "ipywidgets>=8.1.0",
+    "bokeh>=3.2.1",
+]
+performance = [
+    "numba>=0.57.1",
+    "memory-profiler>=0.61.0",
+    "line-profiler>=4.1.1",
+    "py-spy>=0.3.14",
+]
+
+[project.scripts]
+morphogenesis-run = "scripts.run_experiments:main"
+morphogenesis-analyze = "scripts.analyze_results:main"
+morphogenesis-validate = "scripts.validate_installation:main"
+
+[project.urls]
+Homepage = "https://github.com/SharathSPhD/morphogenesis-sort"
+Repository = "https://github.com/SharathSPhD/morphogenesis-sort.git"
+Documentation = "https://github.com/SharathSPhD/morphogenesis-sort/docs"
+"Bug Reports" = "https://github.com/SharathSPhD/morphogenesis-sort/issues"
+
+[tool.setuptools]
+packages = ["core", "analysis", "experiments", "infrastructure", "tools"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.json", "*.md"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["core", "analysis", "experiments", "infrastructure", "tools"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --cov=core --cov=analysis --cov=experiments --cov=infrastructure --cov=tools"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "performance: marks tests as performance tests",
+    "scientific: marks tests as scientific validation tests",
+]
+
+[tool.coverage.run]
+source = ["core", "analysis", "experiments", "infrastructure", "tools"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/.*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

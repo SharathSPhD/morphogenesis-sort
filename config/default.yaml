@@ -1,0 +1,84 @@
+# Default configuration for Enhanced Morphogenesis Research Platform
+
+simulation:
+  engine:
+    async_workers: auto
+    time_step_size: 1.0
+    max_simulation_time: 1000
+    deterministic_execution: true
+
+  population:
+    size: 100
+    initial_distribution: random
+    cell_behavior: sorting
+    seed: 42
+
+  world:
+    dimensions: [100, 100]
+    boundary_conditions: periodic
+    spatial_indexing: grid
+    neighbor_radius: 1.5
+
+performance:
+  monitoring:
+    enabled: true
+    sampling_rate: 1.0
+    memory_tracking: true
+
+  memory:
+    object_pool_size: 1000
+    gc_frequency: 100
+    max_memory_mb: 2048
+
+  optimization:
+    batch_processing: true
+    parallel_analysis: false
+    cache_size: 10000
+
+data_collection:
+  metrics:
+    collection_frequency: 1
+    storage_format: parquet
+    compression: snappy
+
+  snapshots:
+    enabled: true
+    frequency: 10
+    max_snapshots: 1000
+
+  export:
+    auto_export: false
+    formats: [csv, json, parquet]
+    compression: true
+
+analysis:
+  statistical:
+    significance_level: 0.05
+    bootstrap_samples: 1000
+    confidence_interval: 0.95
+    multiple_comparisons: bonferroni
+
+  visualization:
+    real_time: false
+    export_format: png
+    dpi: 300
+    figure_size: [12, 8]
+    interactive: false
+
+  reports:
+    auto_generate: true
+    template: default
+    formats: [html, pdf]
+
+logging:
+  level: INFO
+  format: structured
+  output: console
+  rotation: daily
+  max_files: 30
+
+  categories:
+    simulation: INFO
+    performance: DEBUG
+    analysis: INFO
+    errors: ERROR
